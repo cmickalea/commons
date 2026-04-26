@@ -1,50 +1,80 @@
-# Welcome to your Expo app 👋
+# Commons 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A location-based note-taking and recommendations app for iOS and web. Commons lets you capture thoughts, tips, and discoveries tied to the places that inspired them — and surfaces relevant notes and recommendations when you return.
 
-## Get started
+Built with [Expo](https://expo.dev) using [`create-expo-app`](https://www.npmjs.com/package/create-expo-app) and file-based routing via [Expo Router](https://docs.expo.dev/router/introduction).
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Get Started
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### Install dependencies
 ```bash
-npm run reset-project
+pnpm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Start the app
+```bash
+pnpm start
+```
 
-## Learn more
+From the output you can open the app in a:
+- [Development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [iOS Simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Android Emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [Expo Go](https://expo.dev/go) — a limited sandbox for quick testing
 
-To learn more about developing your project with Expo, look at the following resources:
+### Run on iOS Simulator
+```bash
+pnpm run ios
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+> Make sure Xcode and the iOS Simulator are installed before running. You can install Xcode from the App Store, then open it once to complete setup.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Development
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Start developing by editing files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+### Reset to a blank project
+When you're ready to clear out the starter code:
+```bash
+pnpm run reset-project
+```
+
+This moves the starter code to **app-example** and creates a fresh blank **app** directory.
+
+---
+
+## Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Framework | Expo + React Native |
+| Web support | Expo Router |
+| Styling | NativeWind (Tailwind for RN) |
+| Backend / DB | Supabase (Postgres + PostGIS) |
+| Auth | Supabase Auth |
+| AI | Vercel AI SDK + Anthropic Claude |
+| Package manager | pnpm |
+
+---
+
+## Roadmap
+
+- [ ] Pin notes to specific locations on a map
+- [ ] Surface saved notes when re-entering a location
+- [ ] AI-generated recommendations based on past notes
+- [ ] Share notes/recommendations with friends
+- [ ] Curated public "commons" for neighborhoods and cities
+- [ ] iOS widget for quick note capture
+
+---
+
+## Resources
+
+- [Expo documentation](https://docs.expo.dev/)
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/)
+- [Expo on GitHub](https://github.com/expo/expo)
+- [Expo Discord community](https://chat.expo.dev)
