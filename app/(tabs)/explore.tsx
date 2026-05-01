@@ -1,112 +1,302 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+// Placeholder until backend exists
+const CATEGORY_FILTERS = ["all", "restaurants", "bars", "parks", "museums"];
 
-export default function TabTwoScreen() {
+const MOCK_NEARBY = [
+  { id: "1", name: "Cafe Altro Paradiso", category: "restaurants", distance: "0.2 mi" },
+  { id: "2", name: "Olmsted", category: "restaurants", distance: "0.4 mi" },
+  { id: "3", name: "Negroni Bar", category: "bars", distance: "0.3 mi" },
+  { id: "4", name: "Prospect Park", category: "parks", distance: "0.8 mi" },
+  { id: "5", name: "Brooklyn Museum", category: "museums", distance: "1.1 mi" },
+];
+
+const MOCK_SAVED = [
+  { id: "s1", name: "Via Carota", category: "restaurants", distance: "1.4 mi" },
+  { id: "s2", name: "Attaboy", category: "bars", distance: "0.9 mi" },
+];
+
+export default function ExploreTab() {
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle | requesting | granted | denied
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [manualSearch, setManualSearch] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Request location when tab mounts
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
+  // Fade in content once location resolves
+  useEffect(() => {
+    if (locationStatus === "granted" || locationStatus === "denied") {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [locationStatus]);
+
+  const requestLocation = async () => {
+    setLocationStatus("requesting");
+
+    if (Platform.OS === "web") {
+      if (!navigator.geolocation) {
+        setLocationStatus("denied");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log({ latitude, longitude });
+          setLocationStatus("granted");
+        },
+        () => setLocationStatus("denied")
+      );
+      return;
+    }
+  };
+
+  const filteredNearby =
+    activeFilter === "all"
+      ? MOCK_NEARBY
+      : MOCK_NEARBY.filter((s) => s.category === activeFilter);
+
+  const filteredSaved =
+    activeFilter === "all"
+      ? MOCK_SAVED
+      : MOCK_SAVED.filter((s) => s.category === activeFilter);
+
+  // ── Loading state ──
+  if (locationStatus === "idle" || locationStatus === "requesting") {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color="#8a7f73" />
+        <Text style={styles.loadingText}>finding your location…</Text>
+      </View>
+    );
+  }
+
+  // ── Denied — manual fallback ──
+  if (locationStatus === "denied" && !submittedSearch) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.deniedTitle}>location access off</Text>
+        <Text style={styles.deniedSub}>enter a city or zip to explore</Text>
+        <TextInput
+          style={styles.manualInput}
+          placeholder="new york, ny or 10014"
+          placeholderTextColor="#b0a898"
+          value={manualSearch}
+          onChangeText={setManualSearch}
+          returnKeyType="search"
+          onSubmitEditing={() => setSubmittedSearch(manualSearch)}
+        />
+        <TouchableOpacity
+          style={styles.searchBtn}
+          onPress={() => setSubmittedSearch(manualSearch)}
+        >
+          <Text style={styles.searchBtnText}>search</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={requestLocation}>
+          <Text style={styles.retryText}>or enable location</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // ── Main explore view ──
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      {/* Location context header */}
+      <Text style={styles.contextLabel}>
+        {submittedSearch ? `exploring ${submittedSearch}` : "exploring near you"}
+      </Text>
+
+      {/* Category filters */}
+      <FlatList
+        horizontal
+        data={CATEGORY_FILTERS}
+        keyExtractor={(item) => item}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[styles.filterChip, activeFilter === item && styles.filterChipActive]}
+            onPress={() => setActiveFilter(item)}
+          >
+            <Text
+              style={[styles.filterLabel, activeFilter === item && styles.filterLabelActive]}
+            >
+              {item}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      {/* Content */}
+      <FlatList
+        data={[
+          { type: "section", title: "saved nearby" },
+          ...filteredSaved.map((s) => ({ type: "spot", ...s })),
+          { type: "section", title: "nearby" },
+          ...filteredNearby.map((s) => ({ type: "spot", ...s })),
+        ]}
+        keyExtractor={(item, i) => item.id ?? `section-${i}`}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => {
+          if (item.type === "section") {
+            return <Text style={styles.sectionHeader}>{item.title}</Text>;
+          }
+          return (
+            <View style={styles.spotRow}>
+              <View>
+                <Text style={styles.spotName}>{item.name}</Text>
+                <Text style={styles.spotMeta}>{item.category} · {item.distance}</Text>
+              </View>
+            </View>
+          );
+        }}
+      />
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F0E8",
   },
-  titleContainer: {
-    flexDirection: 'row',
+  centered: {
+    flex: 1,
+    backgroundColor: "#F5F0E8",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    color: "#8a7f73",
+  },
+  deniedTitle: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 22,
+    color: "#2C2620",
+    marginBottom: 6,
+  },
+  deniedSub: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    color: "#8a7f73",
+    marginBottom: 24,
+  },
+  manualInput: {
+    width: "100%",
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#C4B8A8",
+    paddingVertical: 10,
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 16,
+    color: "#2C2620",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  searchBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+    borderWidth: 1,
+    borderColor: "#2C2620",
+    marginBottom: 16,
+  },
+  searchBtnText: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    color: "#2C2620",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  retryText: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 12,
+    color: "#8a7f73",
+    textDecorationLine: "underline",
+  },
+  contextLabel: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    color: "#8a7f73",
+    letterSpacing: 0.3,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  filterRow: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     gap: 8,
+  },
+  filterChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#C4B8A8",
+  },
+  filterChipActive: {
+    backgroundColor: "#2C2620",
+    borderColor: "#2C2620",
+  },
+  filterLabel: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 12,
+    color: "#8a7f73",
+    textTransform: "lowercase",
+  },
+  filterLabelActive: {
+    color: "#F5F0E8",
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  sectionHeader: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 11,
+    color: "#b0a898",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  spotRow: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDE8DF",
+  },
+  spotName: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 16,
+    color: "#2C2620",
+    marginBottom: 2,
+  },
+  spotMeta: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 12,
+    color: "#8a7f73",
   },
 });
