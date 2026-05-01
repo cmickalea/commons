@@ -39,7 +39,7 @@ export default function AuthScreen() {
         email,
         password,
         options: {
-          emailRedirectTo: redirectTo, // ✅ dynamic
+          emailRedirectTo: redirectTo,
         },
       });
 
@@ -64,7 +64,6 @@ export default function AuthScreen() {
         setStatus("error");
       } else {
         setStatus("success");
-        // session listener handles routing
       }
     }
   };
@@ -82,7 +81,7 @@ export default function AuthScreen() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: redirectTo, // ✅ correct
+        emailRedirectTo: redirectTo,
       },
     });
 
@@ -101,12 +100,9 @@ export default function AuthScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.inner}>
-
-        {/* Wordmark */}
         <Text style={styles.wordmark}>commons</Text>
         <Text style={styles.tagline}>make plans with people you like</Text>
 
-        {/* Mode toggle */}
         <View style={styles.modeRow}>
           {(["signin", "signup", "magic"] as Mode[]).map((m) => (
             <TouchableOpacity
@@ -121,7 +117,6 @@ export default function AuthScreen() {
           ))}
         </View>
 
-        {/* Email field — always shown */}
         <TextInput
           style={styles.input}
           placeholder="email"
@@ -133,7 +128,6 @@ export default function AuthScreen() {
           autoCorrect={false}
         />
 
-        {/* Password field — hidden for magic link */}
         {mode !== "magic" && (
           <TextInput
             style={styles.input}
@@ -145,7 +139,6 @@ export default function AuthScreen() {
           />
         )}
 
-        {/* Feedback message */}
         {message ? (
           <Text style={[
             styles.message,
@@ -155,7 +148,6 @@ export default function AuthScreen() {
           </Text>
         ) : null}
 
-        {/* Submit */}
         <TouchableOpacity
           style={styles.submitBtn}
           onPress={mode === "magic" ? handleMagicLink : handleEmailAuth}

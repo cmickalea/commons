@@ -55,13 +55,11 @@ export default function Onboarding() {
         .eq("id", user.id);
       if (profileError) throw profileError;
 
-      // Index gate re-evaluates and sends them to /(tabs)
       router.replace("/");
     }  catch (e: any) {
-  console.log("ONBOARDING ERROR:", JSON.stringify(e, null, 2));
-  setError(e?.message || JSON.stringify(e) || "Something went wrong.");
-  setLoading(false);
-}
+    setError(e?.message || JSON.stringify(e) || "Something went wrong.");
+    setLoading(false);
+    }
   };
 
   return (

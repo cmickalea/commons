@@ -11,6 +11,10 @@ import {
   View,
 } from "react-native";
 
+type SectionItem = { type: "section"; title: string };
+type SpotItem = { type: "spot"; id: string; name: string; category: string; distance: string };
+type ListItem = SectionItem | SpotItem;
+
 // Placeholder until backend exists
 const CATEGORY_FILTERS = ["all", "restaurants", "bars", "parks", "museums"];
 
@@ -35,12 +39,10 @@ export default function ExploreTab() {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Request location when tab mounts
   useEffect(() => {
     requestLocation();
   }, []);
 
-  // Fade in content once location resolves
   useEffect(() => {
     if (locationStatus === "granted" || locationStatus === "denied") {
       Animated.timing(fadeAnim, {
@@ -49,7 +51,7 @@ export default function ExploreTab() {
         useNativeDriver: true,
       }).start();
     }
-  }, [locationStatus]);
+  }, [locationStatus, fadeAnim]);
 
   const requestLocation = async () => {
     setLocationStatus("requesting");
@@ -91,7 +93,6 @@ export default function ExploreTab() {
     );
   }
 
-  // ── Denied — manual fallback ──
   if (locationStatus === "denied" && !submittedSearch) {
     return (
       <View style={styles.centered}>
@@ -119,7 +120,6 @@ export default function ExploreTab() {
     );
   }
 
-  // ── Main explore view ──
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {/* Location context header */}
@@ -127,7 +127,6 @@ export default function ExploreTab() {
         {submittedSearch ? `exploring ${submittedSearch}` : "exploring near you"}
       </Text>
 
-      {/* Category filters */}
       <FlatList
         horizontal
         data={CATEGORY_FILTERS}
@@ -147,16 +146,15 @@ export default function ExploreTab() {
           </TouchableOpacity>
         )}
       />
-
-      {/* Content */}
+    
       <FlatList
         data={[
-          { type: "section", title: "saved nearby" },
-          ...filteredSaved.map((s) => ({ type: "spot", ...s })),
-          { type: "section", title: "nearby" },
-          ...filteredNearby.map((s) => ({ type: "spot", ...s })),
-        ]}
-        keyExtractor={(item, i) => item.id ?? `section-${i}`}
+          { type: "section", title: "saved nearby" } as SectionItem,
+          ...filteredSaved.map((s): SpotItem => ({ type: "spot", ...s })),
+          { type: "section", title: "nearby" } as SectionItem,
+          ...filteredNearby.map((s): SpotItem => ({ type: "spot", ...s })),
+        ] as ListItem[]}
+        keyExtractor={(item, i) => (item.type === "spot" ? item.id : `section-${i}`)}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
           if (item.type === "section") {

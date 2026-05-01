@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+
 
 const QUESTIONS = [
   "happy hour?",
@@ -26,11 +27,10 @@ export default function HomeScreen() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [query, setQuery] = useState("");
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [settled, setSettled] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
-
-  const [settled, setSettled] = useState(false);
 
   // Detect system reduce motion preference
   useEffect(() => {
@@ -42,17 +42,7 @@ export default function HomeScreen() {
     return () => sub.remove();
   }, []);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => setSettled(true), 60000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion || settled) return;
-    const interval = setInterval(cycleQuestion, 3000);
-    return () => clearInterval(interval);
-  }, [reduceMotion, settled]);
-
+  // Fade out and settle after 60s
   useEffect(() => {
     const timeout = setTimeout(() => {
       Animated.timing(fadeAnim, {
@@ -62,9 +52,9 @@ export default function HomeScreen() {
       }).start(() => setSettled(true));
     }, 60000);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [fadeAnim]);
 
-  const cycleQuestion = () => {
+  const cycleQuestion = useCallback(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -96,13 +86,14 @@ export default function HomeScreen() {
         }),
       ]).start();
     });
-  };
+  }, [fadeAnim, slideAnim]);
 
+  // Cycle question on interval
   useEffect(() => {
-    if (reduceMotion) return; // skip animation entirely
+    if (reduceMotion || settled) return;
     const interval = setInterval(cycleQuestion, 3000);
     return () => clearInterval(interval);
-  }, [reduceMotion]);
+  }, [reduceMotion, settled, cycleQuestion]);
 
   return (
     <KeyboardAvoidingView
@@ -112,7 +103,6 @@ export default function HomeScreen() {
       <View style={styles.inner}>
         <View style={styles.headerBlock}>
           {reduceMotion || settled ? (
-            // Static fallback — no animation, no rotating text
             <Text style={styles.question}>where to?</Text>
           ) : (
             <>
@@ -147,7 +137,6 @@ export default function HomeScreen() {
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -203,3 +192,4 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
   },
 });
+

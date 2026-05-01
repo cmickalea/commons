@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    FlatList,
-    Keyboard,
-    Platform,
-    StyleSheet,
-    Text, TextInput, TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Keyboard,
+  Platform,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View,
 } from "react-native";
 
-// ── Constants ──────────────────────────────────────────────
-// Abstracted per best practice — one place to update when model versions change
+
 const AI_MODEL = "claude-sonnet-4-20250514";
 const MAX_TOKENS = 1000;
 const API_URL = "https://api.anthropic.com/v1/messages";
@@ -31,7 +30,6 @@ const SUGGESTED_PROMPTS = [
   "rooftop drinks tonight",
 ];
 
-// ── Types ───────────────────────────────────────────────────
 type Status = "idle" | "loading" | "success" | "error";
 type Recommendation = {
   name: string;
@@ -41,18 +39,15 @@ type Recommendation = {
   priceRange: string;
 };
 
-// ── Component ───────────────────────────────────────────────
+
 export default function AITab({ coords }: { coords?: { latitude: number; longitude: number } }) {
-  // Single status enum — no impossible boolean states
   const [status, setStatus] = useState<Status>("idle");
   const [prompt, setPrompt] = useState("");
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [loadingIndex, setLoadingIndex] = useState(0);
-
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Cycle loading messages while request is in flight
   useEffect(() => {
     if (status !== "loading") return;
     const interval = setInterval(() => {
@@ -63,7 +58,7 @@ export default function AITab({ coords }: { coords?: { latitude: number; longitu
       setLoadingIndex((i) => (i + 1) % LOADING_MESSAGES.length);
     }, 1800);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, fadeAnim]);
 
   const getRecommendations = async (submittedPrompt: string) => {
     Keyboard.dismiss();
@@ -73,20 +68,20 @@ export default function AITab({ coords }: { coords?: { latitude: number; longitu
     // Context injection — this is what makes responses feel local and specific
     const now = new Date();
     const systemPrompt = `You are a local recommendations assistant for Commons, 
-an app that helps people make plans with friends.
-${coords ? `The user's location is ${coords.latitude}, ${coords.longitude}.` : "Location unavailable."}
-Current time: ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.
-Today is ${now.toLocaleDateString([], { weekday: "long" })}.
+      an app that helps people make plans with friends.
+      ${coords ? `The user's location is ${coords.latitude}, ${coords.longitude}.` : "Location unavailable."}
+      Current time: ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.
+      Today is ${now.toLocaleDateString([], { weekday: "long" })}.
 
-Return ONLY a valid JSON array. No markdown, no explanation, no code fences.
-Each object must have exactly these fields:
-- name: string (venue name)
-- category: string (one of: restaurant, bar, park, museum, event)
-- reason: string (one specific sentence explaining why it fits this request)
-- distance: string (estimated e.g. "0.4 mi")
-- priceRange: string (one of: $, $$, $$$)
+      Return ONLY a valid JSON array. No markdown, no explanation, no code fences.
+      Each object must have exactly these fields:
+      - name: string (venue name)
+      - category: string (one of: restaurant, bar, park, museum, event)
+      - reason: string (one specific sentence explaining why it fits this request)
+      - distance: string (estimated e.g. "0.4 mi")
+      - priceRange: string (one of: $, $$, $$$)
 
-Limit to 5 results. Be specific. Avoid generic answers.`;
+      Limit to 5 results. Be specific. Avoid generic answers.`;
 
     try {
       const res = await fetch(API_URL, {
@@ -100,14 +95,11 @@ Limit to 5 results. Be specific. Avoid generic answers.`;
         }),
       });
 
-      // Handle API-level errors separately from network errors
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`);
       }
 
       const data = await res.json();
-
-      // Parse failure handled independently — models occasionally return malformed JSON
       try {
         const parsed = JSON.parse(data.content[0].text);
         setRecommendations(parsed);
@@ -159,7 +151,6 @@ Limit to 5 results. Be specific. Avoid generic answers.`;
         )}
       </View>
 
-      {/* Idle — show suggested prompts */}
       {status === "idle" && (
         <View style={styles.suggestions}>
           <Text style={styles.suggestionsLabel}>try asking</Text>
@@ -171,7 +162,6 @@ Limit to 5 results. Be specific. Avoid generic answers.`;
         </View>
       )}
 
-      {/* Loading */}
       {status === "loading" && (
         <View style={styles.centered}>
           <ActivityIndicator color="#8a7f73" style={{ marginBottom: 16 }} />
@@ -181,7 +171,6 @@ Limit to 5 results. Be specific. Avoid generic answers.`;
         </View>
       )}
 
-      {/* Error */}
       {status === "error" && (
         <View style={styles.centered}>
           <Text style={styles.errorMsg}>{errorMsg}</Text>
@@ -191,7 +180,6 @@ Limit to 5 results. Be specific. Avoid generic answers.`;
         </View>
       )}
 
-      {/* Results */}
       {status === "success" && (
         <FlatList
           data={recommendations}
